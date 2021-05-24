@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-      											                             # dodao
-import rospy													                   # dodao
+                                                         # dodao
+import rospy                                             # dodao
 
 from uav_object_tracking_msgs.msg import object, objectList
 from sensor_msgs.msg import Image
@@ -244,19 +244,20 @@ class Sort(object):
 def callback(data):
     global dets
     global boolean
-    my_data = data
     boolean = True
     dets = []
     for i in range(len(data.obj)):
       bb = data.obj[i]
       dets.append(np.array([bb.x - bb.width/2, bb.y - bb.height/2, bb.x + bb.width/2, bb.y + bb.height/2, bb.confidence]))
     dets = np.array(dets)
-    # rospy.loginfo('I HEARD %s', my_data)
+    # rospy.loginfo('I HEARD %s', data)
 
 def image_callback(data):
     bridge = CvBridge()
     cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-    # nacrtati pravokutnik na temelju podataka iz trackers, rectangle					1. za dodati
+    # nacrtati rectangle na temelju podataka iz trackers                    1. za dodati
+    cv2.rectangle(cv_image, (746, 318), (887, 393), (0,255,0), 2)
+    
     cv2.imshow("sort", cv_image)
     cv2.waitKey(1)
 
@@ -273,24 +274,12 @@ if __name__ == '__main__':
     mot_tracker = Sort(max_age=1, min_hits=3, iou_threshold=0.3) #create instance of the SORT tracker
 
     while not rospy.is_shutdown():
-      print(dets)
+      # print(dets)
       if boolean is True:
         trackers = mot_tracker.update(dets)
         boolean = False
       else:
         trackers = mot_tracker.update(np.empty((0, 5)))
-        print(trackers)				# publishat umjesto printa				2. za dodati, for i in range(len(trackers)): append u listu, umjesto confidence dodati id; objectList
+      print(trackers)       # publishat na neki topic umjesto printa                      2. za dodati, for i in range(len(trackers)): append u listu, umjesto confidence dodati id; objectList
 
       r.sleep()
-
-    # u my_data bih trebao ucitavati podatke sa subscribera (ono sta se ispisalo)
-    # to ucitavam samo kad se pozove callback()
-    # te podatke ubaciti u update() nakon svakog callbacka
-    # ono sta se izracunalo u updateu ne ispisujem u datoteku output nego publisham na neki topic
-
-
-    # u callback stavio varijable
-    # dodao globalne varijable u main
-    # ne radi ucitvanje npr. my_data.x, my_data.y
-
-
