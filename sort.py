@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-                                                         # dodao
-import rospy                                             # dodao
+
+import rospy
 
 from uav_object_tracking_msgs.msg import object, objectList
 from sensor_msgs.msg import Image
@@ -253,10 +253,12 @@ def callback(data):
     # rospy.loginfo('I HEARD %s', data)
 
 def image_callback(data):
+    global trackers
     bridge = CvBridge()
     cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-    # nacrtati rectangle na temelju podataka iz trackers                    1. za dodati
-    cv2.rectangle(cv_image, (746, 318), (887, 393), (0,255,0), 2)
+    if len(trackers) != 0:
+      for tracker in trackers:
+        cv2.rectangle(cv_image, (int(round(tracker[0])), int(round(tracker[1]))), (int(round(tracker[2])), int(round(tracker[3]))), (0,255,0), 2)
     
     cv2.imshow("sort", cv_image)
     cv2.waitKey(1)
@@ -269,17 +271,28 @@ if __name__ == '__main__':
     rospy.init_node('sort', anonymous=True)
     subscriber = rospy.Subscriber("/YOLODetection/detected_objects", objectList, callback)
     image_sub = rospy.Subscriber("/zedm/zed_node/left/image_rect_color", Image, image_callback)
+    pub = rospy.Publisher('/trackers', objectList, queue_size=10)
 
     r = rospy.Rate(15)
     mot_tracker = Sort(max_age=1, min_hits=3, iou_threshold=0.3) #create instance of the SORT tracker
 
     while not rospy.is_shutdown():
-      # print(dets)
       if boolean is True:
         trackers = mot_tracker.update(dets)
         boolean = False
       else:
-        trackers = mot_tracker.update(np.empty((0, 5)))
-      print(trackers)       # publishat na neki topic umjesto printa                      2. za dodati, for i in range(len(trackers)): append u listu, umjesto confidence dodati id; objectList
+        dets = np.empty((0, 5))
+        trackers = mot_tracker.update(dets)
+      print(dets)
+      print(trackers)
+      lista_trackers = []
+      # if len(trackers) != 0:
+      #   for tracker in trackers:
+      #     msg_pub = [tracker[4], (tracker[0] + tracker[2])/2, (tracker[1] + tracker[3])/2, tracker[2] - tracker[0], tracker[3] - tracker[1], dets[0][0], dets[0][1], dets[0][2], dets[0][3], dets[0][4]]
+      #     pub.publish(msg_pub)
+      # print(lista_trackers)       # publishat na neki topic umjesto printa                      2. za dodati, for i in range(len(trackers)): append u listu, umjesto confidence dodati id; objectList
+      
+      # if len(trackers) != 0:
+      #   print("AA", type(trackers[0]))
 
       r.sleep()
