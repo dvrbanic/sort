@@ -286,13 +286,10 @@ if __name__ == '__main__':
       print(dets)
       print(trackers)
       lista_trackers = []
-      # if len(trackers) != 0:
-      #   for tracker in trackers:
-      #     msg_pub = [tracker[4], (tracker[0] + tracker[2])/2, (tracker[1] + tracker[3])/2, tracker[2] - tracker[0], tracker[3] - tracker[1], dets[0][0], dets[0][1], dets[0][2], dets[0][3], dets[0][4]]
-      #     pub.publish(msg_pub)
-      # print(lista_trackers)       # publishat na neki topic umjesto printa                      2. za dodati, for i in range(len(trackers)): append u listu, umjesto confidence dodati id; objectList
-      
-      # if len(trackers) != 0:
-      #   print("AA", type(trackers[0]))
+      if len(trackers) != 0:
+        for tracker in trackers:
+          lista_trackers.append([(tracker[0]+tracker[2])/2, (tracker[1]+tracker[3])/2, tracker[2]-tracker[0], tracker[3]-tracker[1], tracker[4]])
+        for i in lista_trackers:
+          pub.publish(i)
 
       r.sleep()
