@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-														# dodao
-import rospy													# dodao
+      											                             # dodao
+import rospy													                   # dodao
 
 from uav_object_tracking_msgs.msg import object, objectList
+from sensor_msgs.msg import Image
 
 import os
 import numpy as np
@@ -18,8 +19,8 @@ import glob
 import time
 import argparse
 from filterpy.kalman import KalmanFilter
-
-np.random.seed(0)
+from cv_bridge import CvBridge
+import cv2
 
 
 def linear_assignment(cost_matrix):
@@ -241,24 +242,55 @@ class Sort(object):
     return np.empty((0,5))
 
 def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data)
+    global dets
+    global boolean
+    my_data = data
+    boolean = True
+    dets = []
+    for i in range(len(data.obj)):
+      bb = data.obj[i]
+      dets.append(np.array([bb.x - bb.width/2, bb.y - bb.height/2, bb.x + bb.width/2, bb.y + bb.height/2, bb.confidence]))
+    dets = np.array(dets)
+    # rospy.loginfo('I HEARD %s', my_data)
 
+def image_callback(data):
+    bridge = CvBridge()
+    cv_image = bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
+    # nacrtati pravokutnik na temelju podataka iz trackers, rectangle					1. za dodati
+    cv2.imshow("sort", cv_image)
+    cv2.waitKey(1)
 
 if __name__ == '__main__':
+    np.random.seed(0)
+    dets = []
+    boolean = False
+
     rospy.init_node('sort', anonymous=True)
     subscriber = rospy.Subscriber("/YOLODetection/detected_objects", objectList, callback)
+    image_sub = rospy.Subscriber("/zedm/zed_node/left/image_rect_color", Image, image_callback)
 
-    mot_tracker = Sort(1, 3, 0.3) #create instance of the SORT tracker
-    mot_tracker.update()
+    r = rospy.Rate(15)
+    mot_tracker = Sort(max_age=1, min_hits=3, iou_threshold=0.3) #create instance of the SORT tracker
 
-    rospy.spin()
+    while not rospy.is_shutdown():
+      print(dets)
+      if boolean is True:
+        trackers = mot_tracker.update(dets)
+        boolean = False
+      else:
+        trackers = mot_tracker.update(np.empty((0, 5)))
+        print(trackers)				# publishat umjesto printa				2. za dodati, for i in range(len(trackers)): append u listu, umjesto confidence dodati id; objectList
 
-    # u mot_tracker.data bih trebao ucitavati podatke sa subscribera (ono sta se ispisalo)
+      r.sleep()
+
+    # u my_data bih trebao ucitavati podatke sa subscribera (ono sta se ispisalo)
     # to ucitavam samo kad se pozove callback()
     # te podatke ubaciti u update() nakon svakog callbacka
     # ono sta se izracunalo u updateu ne ispisujem u datoteku output nego publisham na neki topic
 
 
-
+    # u callback stavio varijable
+    # dodao globalne varijable u main
+    # ne radi ucitvanje npr. my_data.x, my_data.y
 
 
