@@ -286,12 +286,17 @@ if __name__ == '__main__':
         trackers = mot_tracker.update(dets)
       # print(dets)
       # print(trackers)
-      lista_trackers = []
+      lista_trackers = objectList()
       if len(trackers) != 0:
         for tracker in trackers:
-          lista_trackers.append([(tracker[0]+tracker[2])/2, (tracker[1]+tracker[3])/2, tracker[2]-tracker[0], tracker[3]-tracker[1], tracker[4]])
-        for i in lista_trackers:
-          pub.publish(i)
+          tmp_obj = object()
+          tmp_obj.x = (tracker[0]+tracker[2])/2
+          tmp_obj.y = (tracker[1]+tracker[3])/2
+          tmp_obj.width = tracker[2]-tracker[0]
+          tmp_obj.height = tracker[3]-tracker[1]
+          tmp_obj.confidence = tracker[4]
+          lista_trackers.obj.append(tmp_obj)
+        pub.publish(lista_trackers)
 
       r.sleep()
 
