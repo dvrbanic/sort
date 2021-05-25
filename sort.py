@@ -244,12 +244,13 @@ class Sort(object):
 def callback(data):
     global dets
     global boolean
-    boolean = True
     dets = []
+    dets_tmp = []
     for i in range(len(data.obj)):
       bb = data.obj[i]
-      dets.append(np.array([bb.x - bb.width/2, bb.y - bb.height/2, bb.x + bb.width/2, bb.y + bb.height/2, bb.confidence]))
-    dets = np.array(dets)
+      dets_tmp.append(np.array([bb.x - bb.width/2, bb.y - bb.height/2, bb.x + bb.width/2, bb.y + bb.height/2, bb.confidence]))
+    dets = np.array(dets_tmp)
+    boolean = True
     # rospy.loginfo('I HEARD %s', data)
 
 def image_callback(data):
@@ -277,14 +278,14 @@ if __name__ == '__main__':
     mot_tracker = Sort(max_age=1, min_hits=3, iou_threshold=0.3) #create instance of the SORT tracker
 
     while not rospy.is_shutdown():
-      if boolean is True:
+      if boolean is True and len(dets) != 0:
         trackers = mot_tracker.update(dets)
         boolean = False
       else:
         dets = np.empty((0, 5))
         trackers = mot_tracker.update(dets)
-      print(dets)
-      print(trackers)
+      # print(dets)
+      # print(trackers)
       lista_trackers = []
       if len(trackers) != 0:
         for tracker in trackers:
@@ -293,3 +294,4 @@ if __name__ == '__main__':
           pub.publish(i)
 
       r.sleep()
+
