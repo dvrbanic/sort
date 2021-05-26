@@ -95,7 +95,7 @@ class KalmanBoxTracker(object):
     self.kf.F = np.array([[1,0,0,0,1,0,0],[0,1,0,0,0,1,0],[0,0,1,0,0,0,1],[0,0,0,1,0,0,0],  [0,0,0,0,1,0,0],[0,0,0,0,0,1,0],[0,0,0,0,0,0,1]])
     self.kf.H = np.array([[1,0,0,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,0,0,0],[0,0,0,1,0,0,0]])
 
-    self.kf.R[2:,2:] *= 10.
+    self.kf.R[2:,2:] *= 1.
     self.kf.P[4:,4:] *= 1000. #give high uncertainty to the unobservable initial velocities
     self.kf.P *= 10.
     self.kf.Q[-1,-1] *= 0.01
@@ -268,6 +268,7 @@ if __name__ == '__main__':
     np.random.seed(0)
     dets = []
     boolean = False
+    # ct = 0
 
     rospy.init_node('sort', anonymous=True)
     subscriber = rospy.Subscriber("/YOLODetection/detected_objects", objectList, callback)
@@ -275,7 +276,7 @@ if __name__ == '__main__':
     pub = rospy.Publisher('/trackers', objectList, queue_size=10)
 
     r = rospy.Rate(15)
-    mot_tracker = Sort(max_age=1, min_hits=3, iou_threshold=0.3) #create instance of the SORT tracker
+    mot_tracker = Sort(max_age=1, min_hits=1, iou_threshold=0.3) #create instance of the SORT tracker
 
     while not rospy.is_shutdown():
       if boolean is True and len(dets) != 0:
@@ -296,7 +297,9 @@ if __name__ == '__main__':
           tmp_obj.height = tracker[3]-tracker[1]
           tmp_obj.confidence = tracker[4]
           lista_trackers.obj.append(tmp_obj)
+        # ct += 1
         pub.publish(lista_trackers)
+        # print(ct)
 
       r.sleep()
 
