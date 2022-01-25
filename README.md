@@ -1,2 +1,2 @@
 # sort
-ROS implementation
+ROS implementation of algorithm SORT
